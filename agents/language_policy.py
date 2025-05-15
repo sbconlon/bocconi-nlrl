@@ -71,39 +71,16 @@ class LanguagePolicy:
         # Query the LLM with the given state and actions
         #
         responses = self.llm.generate_response(system_prompts, user_prompts)
-        #
-        # Parse the action and resoning from each response
-        #
-        actions, reasons = [], []
         for i in range(N):
-            print('-------------------', flush=True)
-            print('--> LLM Policy', flush=True)
-            print(flush=True)
-            print('Input state:', flush=True)
-            print(states[i], flush=True)
-            print(flush=True)
-            #
-            # Extract the action and resoning from the response
-            #
-            action = self.extract_action_from_response(responses[i], action_sets[i])
-            reason = self.extract_reason_from_response(responses[i])
-            #
-            # Log
-            #
-            print('Action:', action_sets[i][action], flush=True)
-            print(flush=True)
-            print('Reason:', flush=True)
-            print(reason, flush=True)
-            print(flush=True)
-            #
-            # Save the action and reasoning to the output lists
-            #
-            actions.append(action)
-            reasons.append(reason)
+            print('---------')
+            print(user_prompts[i])
+            print()
+            print(responses[i])
+            print()
         #
-        # Return the list of selected actions and their reasonings.
+        # Return the list of responses from the LLM.
         #
-        return actions, reasons
+        return responses
     
     #
     # Extract the selected action from the LLM response text.

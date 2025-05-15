@@ -354,9 +354,33 @@ class ActorCriticAgent:
             current_states = [envs[i].state for i in active_idxs]
             state_descriptions = [envs[i].describe_state() for i in active_idxs]
             #
-            # Get an action from our policy given the current state
+            # Query the policy LLM
             #
-            actions, _ = self.lang_policy.get_action(state_descriptions, action_sets)
+            responses = self.lang_policy.get_action(state_descriptions, action_sets)
+            #
+            # Extract the action and reasoning from each response
+            #
+            actions, reasons = [], []
+            for idx, env_idx in enumerate(active_idxs):
+                actions.append(envs[env_idx].extract_action_from_response(responses[idx]))
+                reasons.append(envs[env_idx].extract_reason_from_response(responses[idx]))
+            #
+            # Log LLM policy responses
+            #
+            """
+            for idx, env_idx in enumerate(active_idxs):
+                print('-------------------', flush=True)
+                print('--> LLM Policy', flush=True)
+                print(flush=True)
+                print('Input state:', flush=True)
+                print(state_descriptions[idx], flush=True)
+                print(flush=True)
+                print('Action:', actions[idx], flush=True)
+                print(flush=True)
+                print('Reason:', flush=True)
+                print(reasons[idx], flush=True)
+                print(flush=True)
+            """
             #
             # Apply the actions to the environments to collect the
             # rewards and the next states.
