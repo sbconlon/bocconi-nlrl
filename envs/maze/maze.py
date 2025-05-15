@@ -1,5 +1,7 @@
 # External imports
+import numpy as np
 from pathlib import Path
+import re
 
 # Internal imports
 from envs.environment import Environment
@@ -22,11 +24,15 @@ class MazeEnv(Environment):
     #
     #     - The walls '#' define the boundaries.
     #
-    def __init__(self, board_file: str):
+    def __init__(self, board_file: str, throw_formatting_errors: bool=False):
         #
         # Save the board file location
         #
         self.board_file = board_file
+        #
+        # Raise errors if the LLM response is ill-formatted.
+        #
+        self.throw_formatting_errors = throw_formatting_errors
         #
         # Initialize the game as finished.
         #
@@ -339,3 +345,83 @@ class MazeEnv(Environment):
         # Return the resulting string
         #
         return res
+    
+    #
+    # Extract the selected action from the LLM response text.
+    #
+    # Raise an error if the action isn't found or if the extracted
+    # action is not in the given actions dictionary.
+    #
+    def extract_action_from_response(self, response: str) -> int:
+        #
+        # Response must contain this pattern
+        #
+        action_match = re.search(r'Best action:\s*(\d+)', response)
+        if action_match:
+            #
+            # Success case - match found.
+            #
+            action = int(action_match.group(1))
+        else:
+            #
+            # Failure case - no match found, raise a value error or pick a random action.
+            #
+            message_str = f"Missing action. Policy LLM returned an ill-formatted response. Response:\n'{response}'"
+            if self.throw_formatting_errors:
+                raise ValueError(message_str)
+            else:
+                action, _ = self.get_random_action()
+                print('WARNING: ' + message_str)
+        #
+        # Check that the found action id is valid.
+        #
+        # If not, either raise an error or pick a random action.
+        #
+        if action not in self.action_set.keys():
+            message_str = f"Policy LLM selected an invalid action. Got {action}. Expected one of these {self.action_set}\n Response: {response}"
+            if self.throw_formatting_errors:
+                raise ValueError(message_str)
+            else:
+                action, _ = self.get_random_action()
+                print('WARNING: ' + message_str)
+        #
+        # Return the action id.
+        #
+        return action
+
+    #
+    # Extract the reasoning from the LLM response text.
+    #
+    # Raise an error if the reasoning isn't found.
+    #
+    def extract_reason_from_response(self, response: str) -> str:
+        #
+        # Response must contain this pattern.
+        #
+        reason_match = re.search(r"Reason:\s*\n?(.*)", response, re.DOTALL)
+        if reason_match:
+            #
+            # Success case - match found, extract the reasoning string.
+            #
+            reason =  str(reason_match.group(1))
+        else:
+            #
+            # Failure case - no match found, raise a value error or set the
+            #                reason to an empty string.
+            #
+            message_str = f"Missing reasoning. Policy LLM return an ill-formatted response. Response:\n'{response}'"
+            if self.throw_formatting_errors:
+                raise ValueError(message_str)
+            else:
+                reason = ''
+                print('WARNING: ' + message_str)
+        #
+        # Return the reasoning string
+        #
+        return reason
+    
+    #
+    # Given a list of possible actions, select one randomly and give an empty reason.
+    #
+    def get_random_action(self) -> tuple[int, str]:
+        return np.random.choice(list(self.action_set.keys())), ''
