@@ -47,8 +47,7 @@ class ImprovementOperator:
         response = self.llm.generate_response([self.system_prompt],
                                               [self.improvement_prompt.format(state=state,
                                                                              actions=action_set,
-                                                                             evaluations=evals_text)],
-                                              temp=0.)[0]
+                                                                             evaluations=evals_text)])[0]
         #
         # Log
         #

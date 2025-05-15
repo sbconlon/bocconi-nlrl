@@ -1,0 +1,6 @@
+{
+    "policy_config": "configs/maze/policy.json",
+    "values_config": "configs/maze/values.json",
+    "improvement_config": "configs/maze/improvement.json",
+    "throw_formatting_errors": false
+}

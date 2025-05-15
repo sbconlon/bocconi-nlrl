@@ -1,0 +1,5 @@
+{
+    "system_prompt_file": "envs/maze/prompts/policy/system_prompt.txt",
+    "user_prompt_file": "envs/maze/prompts/policy/user_prompt.txt",
+    "epsilon": 0.1
+}

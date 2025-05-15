@@ -37,7 +37,6 @@ class LanguagePolicy:
     #
     #       state = """ #####
     #                   #o  #
-    #                   #   #
     #                   #  x#
     #                   #####
     #               """
@@ -46,7 +45,7 @@ class LanguagePolicy:
     #
     #     Example output - Maze
     #
-    #         action = 3
+    #         action = 2
     #
     #         reason = """
     #           The player is currently standing next to a free space on the right side of 

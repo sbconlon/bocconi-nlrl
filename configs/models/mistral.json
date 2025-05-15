@@ -13,12 +13,11 @@
 
     "generate" : {
         "max_new_tokens": 256,
-        "temperature": 0.2,
-        "do_sample": true
+        "do_sample": false
     },
 
     "train" : {
         "num_train_epochs": 1,
-        "learning_rate": 2e-6
+        "learning_rate": 2e-4
     }
 }
