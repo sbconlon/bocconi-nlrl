@@ -1,6 +1,6 @@
 {
-    "system_prompt": "negotiation/prompts/value/system_prompt.txt",
-    "value_prompt": "negotiation/prompts/value/value_prompt.txt",
-    "mc_estimate_prompt": "negotiation/prompts/value/mc_estimate_prompt.txt",
-    "describe_transition": "negotiation/prompts/value/describe_transition.txt"
+    "system_prompt": "envs/negotiation/prompts/value/system_prompt.txt",
+    "value_prompt": "envs/negotiation/prompts/value/value_prompt.txt",
+    "mc_estimate_prompt": "envs/negotiation/prompts/value/mc_estimate_prompt.txt",
+    "describe_transition": "envs/negotiation/prompts/value/describe_transition.txt"
 }

@@ -35,7 +35,18 @@ class NegotiationEnv(Environment):
         # -1: reject
         # 0-100: propose new price
         # 101-200: accept other's proposal (100 + their proposal)
-        self.action_set = list(range(-1, 201))
+        self.action_list = list(range(-1, 201))
+        
+        # Convert action list to dictionary format for agents
+        self.action_set = {}
+        for action in self.action_list:
+            if action == -1:
+                self.action_set[action] = "reject"
+            elif 0 <= action <= 100:
+                self.action_set[action] = f"propose {action}%"
+            else:  # 101-200
+                other_proposal = action - 100
+                self.action_set[action] = f"accept {other_proposal}%"
         
         # Track whose turn it is
         self.current_turn = "buyer"  # Start with buyer
@@ -43,7 +54,7 @@ class NegotiationEnv(Environment):
         # Initialize the language policy
         #
         self.lang_policy = LanguagePolicy(llm, 
-                                          'configs/policy.json'
+                                          'configs/negotiation/policy.json'
         )
         #
         # Initialize the environment.
@@ -95,7 +106,7 @@ class NegotiationEnv(Environment):
     #
     # Return a list of all valid actions in the environment
     #
-    def actions(self) -> list:
+    def actions(self) -> dict:
         return self.action_set
     
     #
