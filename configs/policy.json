@@ -1,4 +1,4 @@
 {
-    "system_prompt_file": "negotiation/prompts/policy/system_prompt.txt",
-    "user_prompt_file": "negotiation/prompts/policy/user_prompt.txt"
+    "system_prompt_file": "envs/negotiation/prompts/policy/system_prompt.txt",
+    "user_prompt_file": "envs/negotiation/prompts/policy/user_prompt.txt"
 }

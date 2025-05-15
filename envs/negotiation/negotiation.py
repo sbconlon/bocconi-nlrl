@@ -39,13 +39,11 @@ class NegotiationEnv(Environment):
         
         # Track whose turn it is
         self.current_turn = "buyer"  # Start with buyer
-        
         #
         # Initialize the language policy
         #
         self.lang_policy = LanguagePolicy(llm, 
-                                          self.config['policy_config'],
-                                          self.config['throw_formatting_errors']
+                                          'configs/policy.json'
         )
         #
         # Initialize the environment.
