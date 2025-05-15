@@ -1,0 +1,5 @@
+{
+    "system_prompt": "envs/maze/prompts/improvement/system_prompt.txt",
+    "improvement_prompt": "envs/maze/prompts/improvement/improvement_prompt.txt",
+    "describe_evaluation": "envs/maze/prompts/improvement/describe_evaluation.txt"
+}

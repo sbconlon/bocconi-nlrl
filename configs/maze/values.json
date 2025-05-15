@@ -1,0 +1,6 @@
+{
+    "system_prompt": "envs/maze/prompts/value/system_prompt.txt",
+    "value_prompt": "envs/maze/prompts/value/value_prompt.txt",
+    "mc_estimate_prompt": "envs/maze/prompts/value/mc_estimate_prompt.txt",
+    "describe_transition": "envs/maze/prompts/value/describe_transition.txt"
+}

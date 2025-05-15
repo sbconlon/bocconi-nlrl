@@ -141,9 +141,10 @@ class Mistral(LanguageModel):
         if temp is not None:
             if temp != 0:
                 generate_args['temperature'] = temp
+                generate_args['do_sample'] = True
             else:
                 # Can't have a temperature = 0
-                # Instead, we tell the llm to sample deterministicly.
+                # Instead, we tell the llm to act deterministicly.
                 del generate_args['temperature']
                 generate_args['do_sample'] = False
         #

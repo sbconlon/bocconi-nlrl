@@ -76,7 +76,7 @@ class LanguageValueFunction:
         #
         # Query the LLM with the prompts
         #
-        responses = self.llm.generate_response(system_prompts, user_prompts, temp=0.)
+        responses = self.llm.generate_response(system_prompts, user_prompts)
         #
         # Verify that each response is formatted correctly.
         #
