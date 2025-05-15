@@ -26,6 +26,10 @@ class ActorCriticAgent:
         with open(agent_config_file, 'r') as file:
             self.config = json.load(file)
         #
+        # Store a reference to the model
+        #
+        self.llm = llm
+        #
         # Core components
         #
         self.lang_policy = LanguagePolicy(llm, 
@@ -71,7 +75,7 @@ class ActorCriticAgent:
         TOP_N_ACTIONS = 4
         VALUE_BATCH_SIZE = 'all'
         POLICY_BATCH_SIZE = 'all'
-        KEEP_N_ITER_HISTORY = 3
+        KEEP_N_ITER_HISTORY = 0
         #
         # Reset agent statistics
         #
@@ -306,6 +310,10 @@ class ActorCriticAgent:
             value_buffer = [target for target in value_buffer if target[0] >= threshold]
             policy_buffer = [target for target in policy_buffer if target[0] >= threshold]
             #
+            # Save the model
+            #
+            self.llm.save()
+            #
             # Log per step runtime
             #
             print(f'STEP 5: runtime={time.time()-start_time}', flush=True)
@@ -313,7 +321,6 @@ class ActorCriticAgent:
         # Print training stat summary
         #
         self.print_stat_summary()
-
 
     #
     # Use the agent's policy to rollout the environment

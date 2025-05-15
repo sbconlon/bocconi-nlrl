@@ -2,6 +2,8 @@
     "name": "mistralai/Mistral-7B-Instruct-v0.1",
 
     "type": "Mistral",
+
+    "save_dir": "outputs/mistral_2x2_maze/",
     
     "bits_and_bytes": {
         "load_in_4bit": true,
@@ -11,7 +13,7 @@
 
     "generate" : {
         "max_new_tokens": 256,
-        "temperature": 0.5,
+        "temperature": 0.2,
         "do_sample": true
     },
 

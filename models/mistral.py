@@ -1,5 +1,6 @@
 # External imports
 import bitsandbytes as bnb
+from copy import copy
 from datasets import Dataset
 import json
 from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model
@@ -127,12 +128,24 @@ class Mistral(LanguageModel):
     # Given strings with the user and system prompts, query the LLM
     # and return the response.
     #
-    def generate_response(self, system_prompts : list[str], user_prompts : list[str]) -> list[str]:
+    def generate_response(self, system_prompts : list[str], user_prompts : list[str], temp: float=None) -> list[str]:
         #
         # Get prompt batch size
         #
         assert len(system_prompts) == len(user_prompts), "Prompt list length mismatch."
         N = len(system_prompts)
+        #
+        # Adjust temperature if it was passed as a function argument
+        #
+        generate_args = copy(self.config['generate'])
+        if temp is not None:
+            if temp != 0:
+                generate_args['temperature'] = temp
+            else:
+                # Can't have a temperature = 0
+                # Instead, we tell the llm to sample deterministicly.
+                del generate_args['temperature']
+                generate_args['do_sample'] = False
         #
         # Format each system+user prompt pair together
         #
@@ -212,8 +225,8 @@ class Mistral(LanguageModel):
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
-                    **self.config['generate'],
-                    pad_token_id=self.tokenizer.eos_token_id # supresses a warning message
+                    **generate_args,
+                    pad_token_id=self.tokenizer.eos_token_id, # supresses a warning message
                 )
             #
             # Decode the response from the instruction
@@ -352,4 +365,10 @@ class Mistral(LanguageModel):
         if retries == MAX_TRAIN_RETRIES:
             raise SystemExit("Fatal CUDA error during training. Please restart the process.")
 
-
+    #
+    # Save the model to disk
+    #
+    def save(self):
+        save_dir = self.config['save_dir']
+        self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
