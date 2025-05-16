@@ -29,13 +29,83 @@ class LanguageValueFunction:
         #
         self.throw_formatting_errors = throw_formatting_errors
 
+    #
+    # Given the action set, format the system prompt and return it.
+    #
+    def get_system_prompt(self, action_set: dict) -> str:
+        #
+        # If the action space is discrete, use it in the LLM prompt.
+        #
+        if action_set:
+            #
+            # Pass the action set to the system prompt so that the LLM knows
+            # the avaible set of actions.
+            #
+            prompt = self.system_prompt.format(actions=action_set.values())
+        #
+        # Otherwise, the action space is continuous and needs to be described in the
+        # prompt itself.
+        #
+        else:
+            #
+            # If there isn't an action set given, then the action set
+            # must be described in the system prompt itself.
+            #
+            # For the negotiation game, the LLM knows the action set already.
+            #
+            prompt = self.system_prompt
+        #
+        # Return the propmpt
+        #
+        return prompt
+                
+    #
+    # Given a state-action pair plus the trajectories, format the
+    # Monte-Carlo estimate prompt.
+    #
+    def get_mc_estimate_prompt(self, state: str, action, action_set: dict, traj_text: str) -> str:
+        #
+        # If we are given a discrete action set, then use it.
+        # Otherwise, format the prompt with the raw action.
+        #
+        action_str = action_set[action] if action_set else action
+        #
+        # Format the prompt
+        #
+        prompt = self.mc_estimate_prompt.format(
+            state=state, 
+            action=action_str, 
+            examples=traj_text
+        )
+        #
+        # Return the formatted prompt
+        #
+        return prompt
+
+    #
+    # Given a state-action pair, format the value prompt.
+    #
+    def get_value_prompt(self, state: str, action, action_set: dict) -> str:
+        #
+        # If we are given a discrete action set, then use it.
+        # Otherwise, format the prompt with the raw action.
+        #
+        action_str = action_set[action] if action_set else action
+        #
+        # Format the prompt
+        #
+        prompt = self.value_prompt.format(state=state, action=action_str)
+        #
+        # Return the formatted prompt
+        #
+        return prompt
 
     #
     # Given state-action pairs and a set of example trajectories, 
     # return the LLM's response estimating the Monte-Carlo value.
     #
-    def mc_estimate(self, sa_pairs : list[tuple[str, int]],  
-                          action_sets : list[dict[int, str]], 
+    def mc_estimate(self, sa_pairs : list[tuple],  
+                          action_sets : list[dict], 
                           trajectory_samples_lst : list[list[str]]) -> str:
         print('mc_estimate', flush=True)
         #
@@ -60,19 +130,10 @@ class LanguageValueFunction:
             #
             traj_text = self.trajectories_to_text(action_set, trajectory_samples)
             #
-            # Save the system prompt for this sa pair.
+            # Save the system and user prompts for this sa pair.
             #
-            system_prompts.append(self.system_prompt.format(actions=action_set.values()))
-            #
-            # Save the user prompt for this sa pair.
-            #
-            user_prompts.append(
-                self.mc_estimate_prompt.format(
-                    state=state, 
-                    action=action_set[action], 
-                    examples=traj_text
-                )
-            )
+            system_prompts.append(self.get_system_prompt(action_set))
+            user_prompts.append(self.get_mc_estimate_prompt(state, action, action_set, traj_text)) 
         #
         # Query the LLM with the prompts
         #
@@ -86,6 +147,7 @@ class LanguageValueFunction:
             #
             state, action = sa_pairs[i]
             action_set = action_sets[i]
+            action_str = action_set[action] if action_set else action
             response = responses[i]
             #
             # Log
@@ -93,24 +155,9 @@ class LanguageValueFunction:
             print('-------------------', flush=True)
             print('--> LLM MC Estimate', flush=True)
             print(flush=True)
-            print('Input state-action pair:', flush=True)
-            print(state, flush=True)
-            print(flush=True)
-            print('Action:', action_set[action], flush=True)
-            print(flush=True)
-            #
-            # Verify the response's formatting by extracting the value
-            # and reasoning.
-            #
-            value = self.extract_value_from_response(response)
-            reason = self.extract_reason_from_response(response)
-            #
-            # Log
-            #
-            print('Value:', value, flush=True)
-            print(flush=True)
-            print('Reason:', flush=True)
-            print(reason, flush=True)
+            print(user_prompts[i], flush=True)
+            print()
+            print(responses[i], flush=True)
         #
         # Otherwise, the selected action is valid.
         #
@@ -129,7 +176,7 @@ class LanguageValueFunction:
             #
             # Trajectory header to delineate it from other samples.
             #
-            traj_samples_text += f"Trajectory example {i}:\n"
+            traj_samples_text += f"Example {i}:\n"
             #
             # Add the description of each transition to the trajectory text.
             #
@@ -197,7 +244,7 @@ class LanguageValueFunction:
     #       - action = action id from the environment
     #       - value = string describing the Monte-Carlo estimate of the state-action pair
     #
-    def update(self, target_values : list[tuple], actions : dict[int, str]) -> None:
+    def update(self, target_values : list[tuple], action_set : dict[int, str]) -> None:
         #
         # Format the targets into a list that can be used to create
         # a Hugging Face dataset object.
@@ -209,8 +256,8 @@ class LanguageValueFunction:
         #
         data = [
             {
-                'system_prompt': self.system_prompt.format(actions=actions.values()),
-                'user_prompt': self.value_prompt.format(state=state, action=action),
+                'system_prompt': self.get_system_prompt(action_set),
+                'user_prompt': self.get_value_prompt(state, action, action_set),
                 'response': value_target
             } for state, action, value_target in target_values
         ]
@@ -237,16 +284,11 @@ class LanguageValueFunction:
             #
             # Format the system prompt for this state-action pair
             #
-            system_prompts.append(
-                self.system_prompt.format(actions=action_sets[i].values())
-            )
+            system_prompts.append(self.get_system_prompt(action_sets[i]))
             #
             # Format the user prompt for this state-action pair
             #
-            user_prompts.append(
-                self.value_prompt.format(state=states[i], 
-                                         action=action_sets[i][actions[i]])
-            )
+            user_prompts.append(self.get_value_prompt(states[i], actions[i], action_sets[i]))
         #
         # Query the LLM with the batch of prompts
         #
@@ -255,30 +297,17 @@ class LanguageValueFunction:
         # Log and verify the formatting of each response
         #
         for i in range(N):
+            action_str = action_sets[i][actions[i]] if action_sets[i] else actions[i]
             #
             # Log
             #
             print('-------------------')
             print('--> LLM Value function')
             print()
-            print('Input state-action pair:')
-            print(states[i])
+            print(user_prompts[i], flush=True)
             print()
-            print('Action:', action_sets[i][actions[i]])
+            print(responses[i], flush=True)
             print()
-            #
-            # Verify the response's formatting by extracting the value
-            # and reasoning.
-            #
-            value = self.extract_value_from_response(responses[i])
-            reason = self.extract_reason_from_response(responses[i])
-            #
-            # Log
-            #
-            print('Value:', value)
-            print()
-            print('Reason:')
-            print(reason)
         #
         # Return the LLM responses
         #

@@ -71,8 +71,8 @@ class ActorCriticAgent:
         #   - KEEP_N_ITER_HISTORY - num. of training iterations until a target is evicted from its buffer.
         #
         #
-        N_ACTION_SAMPLES = 'all'
-        TOP_N_ACTIONS = 4
+        N_ACTION_SAMPLES = self.config['num_action_samples']
+        TOP_N_ACTIONS = self.config['top_n_actions']
         VALUE_BATCH_SIZE = 'all'
         POLICY_BATCH_SIZE = 'all'
         KEEP_N_ITER_HISTORY = 0
@@ -142,7 +142,6 @@ class ActorCriticAgent:
                     #
                     # Start with a fresh list of environments
                     #
-                    self.env.reset()
                     envs = [deepcopy(self.env) for _ in range(len(trajectory))]
                     #
                     # Set each environment to a state visited in the trajectory
@@ -161,6 +160,7 @@ class ActorCriticAgent:
                         #
                         # Save the state action pair for this transition.
                         #
+                        env.set_state(state)
                         state_description = env.describe_state()
                         sa_pairs.append((state_description, action))
                         #
@@ -245,9 +245,25 @@ class ActorCriticAgent:
             print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
             for trajectory in trajectories:
                 for transition in trajectory:
+                    #
+                    # For each state in the trajectory...
+                    #
                     state = transition[0]
+                    #
+                    # Set the environment to this state
+                    #
                     self.env.set_state(state)
+                    #
+                    # Get the set of available actions in this state.
+                    #
+                    # Note: if env has a continuous action set space, then
+                    #       all_actions will be an empty dictionary.
+                    #
                     all_actions = self.env.actions()
+                    #
+                    # Get the text description of the state.
+                    #
+                    state_description = self.env.describe_state() 
                     #
                     # Get a set of actions for the policy improvement operator to consider
                     # for this state.
@@ -259,21 +275,39 @@ class ActorCriticAgent:
                         actions = list(all_actions.keys())
                     else:
                         #
+                        # Make a list of the state description and action set.
+                        #
+                        # Note: This is neccessary for prompt batching.
+                        #
+                        state_descriptions = [state_description] * N_ACTION_SAMPLES
+                        action_sets = [self.env.actions()] * N_ACTION_SAMPLES
+                        #
                         # Sample actions from the policy to estimate
                         # action probabilities.
                         #
                         # Recall - the language policy does not directly assign a probability 
                         #          distribution over the action space.
                         #
-                        sampled_actions = [self.lang_policy.get_action(state, all_actions)[0] for _ in range(N_ACTION_SAMPLES)]
+                        policy_responses = self.lang_policy.get_action(state_descriptions, action_sets)
+                        #
+                        # Extract the actions from the responses from the policy LLM.
+                        #
+                        sampled_actions = [
+                            self.env.extract_action_from_response(response)
+                            for response in policy_responses 
+                        ]
                         #
                         # Get the top N most frequent actions
                         #
-                        actions = [action for action, _ in Counter(sampled_actions).most_common(TOP_N_ACTIONS)]
+                        # Unless 'all' is set, then use all the sampled actions.
+                        #
+                        if TOP_N_ACTIONS == 'all':
+                            actions = sampled_actions
+                        else:
+                            actions = list(Counter(sampled_actions).most_common(TOP_N_ACTIONS))
                     #
                     # Get the value estimates for each action in this state
                     #
-                    state_description = self.env.describe_state()
                     state_descriptions = [state_description] * len(actions)
                     action_sets = [self.env.actions()] * len(actions)
                     values = self.lang_values.get_value(state_descriptions, actions, action_sets)
@@ -283,9 +317,17 @@ class ActorCriticAgent:
                     #
                     policy_target = self.improvement_op.reason(state_description, actions, values, self.env.actions())
                     #
+                    # Verify the reasoning response was formatted properly.
+                    #
+                    action = self.env.extract_action_from_response(policy_target)
+                    reason = self.env.extract_reason_from_response(policy_target)
+                    #
                     # Store the policy target triplet in the policy buffer.
                     #
-                    policy_buffer.append((train_idx, (state, all_actions, policy_target)))
+                    # Only train on policy targets with non-empty reasoning.
+                    #
+                    if reason != '':
+                        policy_buffer.append((train_idx, (state, all_actions, policy_target)))
             #
             # Log per step runtime
             #
@@ -351,7 +393,7 @@ class ActorCriticAgent:
             #
             # Select an action for each active environment
             #
-            current_states = [envs[i].state for i in active_idxs]
+            current_states = [deepcopy(envs[i].state) for i in active_idxs]
             state_descriptions = [envs[i].describe_state() for i in active_idxs]
             #
             # Query the policy LLM
@@ -364,23 +406,6 @@ class ActorCriticAgent:
             for idx, env_idx in enumerate(active_idxs):
                 actions.append(envs[env_idx].extract_action_from_response(responses[idx]))
                 reasons.append(envs[env_idx].extract_reason_from_response(responses[idx]))
-            #
-            # Log LLM policy responses
-            #
-            """
-            for idx, env_idx in enumerate(active_idxs):
-                print('-------------------', flush=True)
-                print('--> LLM Policy', flush=True)
-                print(flush=True)
-                print('Input state:', flush=True)
-                print(state_descriptions[idx], flush=True)
-                print(flush=True)
-                print('Action:', actions[idx], flush=True)
-                print(flush=True)
-                print('Reason:', flush=True)
-                print(reasons[idx], flush=True)
-                print(flush=True)
-            """
             #
             # Apply the actions to the environments to collect the
             # rewards and the next states.

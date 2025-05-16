@@ -1,7 +1,6 @@
 The situation is:
 {state}
 
-His possible actions are {actions}.
-
 Evaluations:
+--------
 {evaluations}

@@ -1,2 +1,4 @@
-item_description: "A 2022 Tesla Model 3 in excellent condition with 15,000 miles. The car has been well-maintained with all service records available. It includes features like autopilot, premium sound system, and glass roof. The battery health is at 98% and the car has never been in any accidents. The original MSRP was $48,000."
-item_price: 40000
+{
+    'item_description': "A 2022 Tesla Model 3 in excellent condition with 15,000 miles. The car has been well-maintained with all service records available. It includes features like autopilot, premium sound system, and glass roof. The battery health is at 98% and the car has never been in any accidents. The original MSRP was $48,000.",
+    'item_value': 40000 # NOTE - change this to the actual item value/sale price
+}

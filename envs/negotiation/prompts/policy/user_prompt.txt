@@ -1,6 +1,4 @@
-state:
 {state}
-Available actions: {actions}
 
-Your turn:
-Choose an action.
+Select a price to offer and send a very short, persuasive chat message to convince the other person to accept the deal.
+Limit your message to 30 words or less.

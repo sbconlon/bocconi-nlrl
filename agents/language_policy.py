@@ -55,7 +55,7 @@ class LanguagePolicy:
     #           the maze.
     #         """
     #
-    def get_action(self, states : list[str], action_sets : list[dict]) -> tuple[int, str]:
+    def get_action(self, states : list[str], action_sets : list[dict]) -> list[str]:
         #
         # Get the prompt batch size
         #
@@ -71,94 +71,23 @@ class LanguagePolicy:
         # Query the LLM with the given state and actions
         #
         responses = self.llm.generate_response(system_prompts, user_prompts)
+        #
+        # Log the LLM responses
+        #
         for i in range(N):
-            print('---------')
-            print(user_prompts[i])
-            print()
-            print(responses[i])
-            print()
+            print('-------------------', flush=True)
+            print('--> LLM Policy', flush=True)
+            print(flush=True)
+            print('Prompt:')
+            print(user_prompts[i], flush=True)
+            print(flush=True)
+            print('Response:')
+            print(responses[i], flush=True)
+            print(flush=True)
         #
         # Return the list of responses from the LLM.
         #
         return responses
-    
-    #
-    # Extract the selected action from the LLM response text.
-    #
-    # Raise an error if the action isn't found or if the extracted
-    # action is not in the given actions dictionary.
-    #
-    def extract_action_from_response(self, response: str, actions: dict[int, str]) -> int:
-        #
-        # Response must contain this pattern
-        #
-        # action_match = re.search(r'Best action:\s*(\d+)', response)
-        action_match = re.search(r'Your desicion:\s*(\d+)', response)
-
-        if action_match:
-            #
-            # Success case - match found.
-            #
-            action = int(action_match.group(1))
-        else:
-            #
-            # Failure case - no match found, raise a value error or pick a random action.
-            #
-            message_str = f"Missing action. Policy LLM returned an ill-formatted response. Response:\n'{response}'"
-            if self.throw_formatting_errors:
-                raise ValueError(message_str)
-            else:
-                action, _ = self.get_random_action(actions)
-                print('WARNING: ' + message_str)
-        #
-        # Check that the found action id is valid.
-        #
-        # If not, either raise an error or pick a random action.
-        #
-        if action not in actions.keys():
-            message_str = f"Policy LLM selected an invalid action. Got {action}. Expected one of these {actions}\n Response: {response}"
-            if self.throw_formatting_errors:
-                raise ValueError(message_str)
-            else:
-                action, _ = self.get_random_action(actions)
-                print('WARNING: ' + message_str)
-        #
-        # Return the action id.
-        #
-        return action
-
-    #
-    # Extract the reasoning from the LLM response text.
-    #
-    # Raise an error if the reasoning isn't found.
-    #
-    def extract_reason_from_response(self, response: str) -> str:
-        #
-        # Response must contain this pattern.
-        #
-        # reason_match = re.search(r"Reason:\s*\n?(.*)", response, re.DOTALL)
-        reason_match = re.search(r"Message:\s*\n?(.*)", response, re.DOTALL)
-
-        if reason_match:
-            #
-            # Success case - match found, extract the reasoning string.
-            #
-            reason =  str(reason_match.group(1))
-        else:
-            #
-            # Failure case - no match found, raise a value error or set the
-            #                reason to an empty string.
-            #
-            message_str = f"Missing reasoning. Policy LLM return an ill-formatted response. Response:\n'{response}'"
-            if self.throw_formatting_errors:
-                raise ValueError(message_str)
-            else:
-                reason = ''
-                print('WARNING: ' + message_str)
-        #
-        # Return the reasoning string
-        #
-        return reason
 
     #
     # Given a batch of policy targets, update the policy LLM
@@ -188,64 +117,3 @@ class LanguagePolicy:
         # Train the LLM on the policy target data
         #
         self.llm.train(data)
-
-    #
-    # Given a list of possible actions, select one randomly and give an empty reason.
-    #
-    def get_random_action(self, actions : dict[int, str]) -> tuple[int, str]:
-        return np.random.choice(list(actions.keys())), ''
-    
-    #
-    # Given a state and action, return the response from the LLM.
-    #
-    def get_message(self, state: str, action: int) -> str:
-        #
-        # Get the prompt for the given state and action
-        #
-        system_prompt = self.system_prompt.format(action=action)
-        prompt = self.user_prompt.format(state=state, actions=action)
-        #
-        # Get the response from the LLM
-        #
-        response = self.llm.generate_response(system_prompt, prompt)
-        #
-        # Extract the message from the response
-        #
-        message = self.extract_message_from_response(response)
-        #
-        # Return the message
-        #
-        return message
-    
-    #
-    # Extract the message from the LLM response text.
-    #
-    # Raise an error if the message isn't found.
-    #
-    def extract_message_from_response(self, response: str) -> str:
-        #
-        # Response must contain this pattern.
-        #
-        message_match = re.search(r"Message:\s*\n?(.*)", response, re.DOTALL)
-
-        if message_match:
-            #
-            # Success case - match found, extract the message string.
-            #
-            message = str(message_match.group(1))
-        else:
-            #
-            # Failure case - no match found, raise a value error or set the
-            #                message to an empty string.
-            #
-            message_str = f"Missing message. Policy LLM returned an ill-formatted response. Response:\n'{response}'"
-            if self.throw_formatting_errors:
-                raise ValueError(message_str)
-            else:
-                message = ''
-                print('WARNING: ' + message_str)
-        #
-        # Return the message string
-        #
-        return message
-    

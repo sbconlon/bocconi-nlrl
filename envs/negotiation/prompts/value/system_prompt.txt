@@ -11,10 +11,14 @@ The goal of the agent is:
 - If the agent is a **seller**: successfully close the deal at a price **equal to or above** their reservation price. The higher the price, the better the **profit margin**.
 - If the agent is a **buyer**: successfully close the deal at a price **equal to or below** their reservation price. The lower the price, the better the **savings**.
 
-The available actions the agent can take are {actions}. You must evaluate the action's **potential future reward**, considering:
+You must evaluate the action's **potential future reward**, considering:
 - Whether the action is likely to **lead to a deal**
 - Whether the **expected final price** is likely to yield a **positive reward** (profit or savings)
 - How strategically sound the action is, given the negotiation history
+
+The action will be given as a python dictionary were 'price' is the potential offer price in USD
+and 'message' is the potential message to be sent. A price of -1 means that the agent wants to accept the offer.
+A price of -2 means the agent wants to reject the offer.
 
 Always respond with:
 Value: {value}
@@ -35,4 +39,3 @@ Explain your reasoning by evaluating:
 - Any risks that the action pushes the deal too far off-track
 
 Only evaluate **one action per user prompt**.
-

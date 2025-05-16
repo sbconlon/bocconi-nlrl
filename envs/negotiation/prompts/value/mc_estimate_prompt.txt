@@ -1,9 +1,11 @@
-Given the examples:
-{examples}
-
-The situation right now is:
 {state}
 
-Should the agent {action}? Summarize the example play throughs and use them as 
-evidence to guide your reasoning. ONLY use the information from the examples to guide 
-your reasoning and only provide one value and resoning response.
+Here are examples of how past negotiations have gone:
+{examples}
+
+Evaluate this price offer and message:
+{action}
+
+Summarize the examples and use them as evidence to guide your reasoning. 
+ONLY use the information from the examples to guide your reasoning and only provide one 
+value and resoning response.

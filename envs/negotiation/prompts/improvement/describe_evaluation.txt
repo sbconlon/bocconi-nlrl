@@ -1,1 +1,6 @@
-Evaluation of action {action_id} ({action_str}): {evaluation}
+Action:
+{action}
+
+Action evaluation:
+{evaluation}
+--------

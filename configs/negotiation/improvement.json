@@ -1,5 +1,5 @@
 {
-    "system_prompt": "negotiation/prompts/improvement/system_prompt.txt",
-    "improvement_prompt": "negotiation/prompts/improvement/improvement_prompt.txt",
-    "describe_evaluation": "negotiation/prompts/improvement/describe_evaluation.txt"
+    "system_prompt": "envs/negotiation/prompts/improvement/system_prompt.txt",
+    "improvement_prompt": "envs/negotiation/prompts/improvement/improvement_prompt.txt",
+    "describe_evaluation": "envs/negotiation/prompts/improvement/describe_evaluation.txt"
 }
