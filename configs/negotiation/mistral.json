@@ -1,0 +1,23 @@
+{
+    "name": "mistralai/Mistral-7B-Instruct-v0.1",
+
+    "type": "Mistral",
+
+    "save_dir": "outputs/mistral_2x2_maze/",
+    
+    "bits_and_bytes": {
+        "load_in_4bit": true,
+        "bnb_4bit_quant_type": "nf4",
+        "bnb_4bit_compute_dtype": "torch.bfloat16"
+    },
+
+    "generate" : {
+        "max_new_tokens": 256,
+        "do_sample": false
+    },
+
+    "train" : {
+        "num_train_epochs": 1,
+        "learning_rate": 2e-4
+    }
+}

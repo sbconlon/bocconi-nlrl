@@ -1,6 +1,6 @@
 {
     "initial_board": "envs/negotiation/starting_dialogue/simple_dialogue.txt",
-    "model_config": "configs/models/mistral.json",
+    "model_config": "configs/negotiation/mistral.json",
     "agent_config": "configs/negotiation/agent.json",
     "num_train_loops": 5,
     "num_trajectories_per_loop": 1,
