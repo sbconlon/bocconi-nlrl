@@ -16,6 +16,6 @@ conda activate nlrl
 echo “Running on host $(hostname)”
 echo “CUDA_VISIBLE_DEVICES = $CUDA_VISIBLE_DEVICES”
 
-python train.py configs/train.json > out.txt
+python train_maze.py configs/maze/train.json > out.txt
 
 module purge
