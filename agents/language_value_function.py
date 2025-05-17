@@ -107,7 +107,6 @@ class LanguageValueFunction:
     def mc_estimate(self, sa_pairs : list[tuple],  
                           action_sets : list[dict], 
                           trajectory_samples_lst : list[list[str]]) -> str:
-        print('mc_estimate', flush=True)
         #
         # Get the prompt batch size
         #
@@ -154,9 +153,10 @@ class LanguageValueFunction:
             #
             print('-------------------', flush=True)
             print('--> LLM MC Estimate', flush=True)
-            print(flush=True)
+            print('Prompt:', flush=True)
             print(user_prompts[i], flush=True)
             print()
+            print('Response:')
             print(responses[i], flush=True)
         #
         # Otherwise, the selected action is valid.
@@ -303,9 +303,10 @@ class LanguageValueFunction:
             #
             print('-------------------')
             print('--> LLM Value function')
-            print()
+            print('Prompt:')
             print(user_prompts[i], flush=True)
             print()
+            print('Response:')
             print(responses[i], flush=True)
             print()
         #

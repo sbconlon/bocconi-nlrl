@@ -55,7 +55,7 @@ class LanguagePolicy:
     #           the maze.
     #         """
     #
-    def get_action(self, states : list[str], action_sets : list[dict]) -> list[str]:
+    def get_action(self, states : list[str], action_sets : list[dict], temp: float=0.) -> list[str]:
         #
         # Get the prompt batch size
         #
@@ -70,7 +70,7 @@ class LanguagePolicy:
         #
         # Query the LLM with the given state and actions
         #
-        responses = self.llm.generate_response(system_prompts, user_prompts)
+        responses = self.llm.generate_response(system_prompts, user_prompts, temp=temp)
         #
         # Log the LLM responses
         #

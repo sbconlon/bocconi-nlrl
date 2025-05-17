@@ -76,8 +76,10 @@ class ImprovementOperator:
         #
         print('-------------------')
         print('--> LLM Policy Improvement Operator')
+        print('Prompt:')
         print(user_prompt)
         print()
+        print('Response:')
         print(response)
         #
         # Return the response

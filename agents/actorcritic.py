@@ -26,6 +26,11 @@ class ActorCriticAgent:
         with open(agent_config_file, 'r') as file:
             self.config = json.load(file)
         #
+        # Set the initial starting action temperature parameters
+        #
+        self.initial_action_temp = self.config['init_action_temp']
+        self.temp_factor = self.config['temp_factor'] # Decay the temp by this factor every train iteration
+        #
         # Store a reference to the model
         #
         self.llm = llm
@@ -76,6 +81,7 @@ class ActorCriticAgent:
         VALUE_BATCH_SIZE = 'all'
         POLICY_BATCH_SIZE = 'all'
         KEEP_N_ITER_HISTORY = 0
+        action_temp = self.initial_action_temp
         #
         # Reset agent statistics
         #
@@ -90,12 +96,29 @@ class ActorCriticAgent:
         #
         for train_idx in range(T): # Main training loop
             start_time = time.time()
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
+            print('STEP 0: MEASURE MODEL PERFORMANCE', flush=True)
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
+            #
+            # Collect a trajectory with zero temperature to evaluate performance without randomness.
+            #
+            self.env.reset()
+            eval_trajectory = self.rollout([self.env], action_temp=0.)
+            #
+            # Update stats
+            #
+            self.update_stats(eval_trajectory)
+            self.print_stat_summary()
             #
             # Collect trajectories
             #
             print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
             print('STEP 1: COLLECT TRAJECTORIES', flush=True)
             print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
+            #
+            # Log the action sampling temperature
+            #
+            print('Sampling actions with temperature:', action_temp)
             #
             # Reset game to its starting position
             #
@@ -107,13 +130,7 @@ class ActorCriticAgent:
             #
             # Rollout each enironment and collect the trajectories.
             #
-            trajectories = self.rollout(envs) # [[(s, a, r), ..], ...]
-            #
-            # Update stats
-            #
-            self.update_stats(trajectories)
-            self.print_stat_summary()
-            print(f'Avg. trajectory length:{np.mean([len(trajectory) for trajectory in trajectories])}', flush=True)
+            trajectories = self.rollout(envs, action_temp=action_temp) # [[(s, a, r), ..], ...]            
             #
             # Log per step runtime
             #
@@ -183,7 +200,7 @@ class ActorCriticAgent:
                     #
                     # Rollout the environments
                     #
-                    rollouts = self.rollout(envs)
+                    rollouts = self.rollout(envs, action_temp=action_temp)
                     #
                     # Add the first transition to the front of these rollouts to
                     # get the full sample trajectory.
@@ -352,6 +369,10 @@ class ActorCriticAgent:
             value_buffer = [target for target in value_buffer if target[0] >= threshold]
             policy_buffer = [target for target in policy_buffer if target[0] >= threshold]
             #
+            # Decay the action sampling temperature for the next iteration
+            #
+            action_temp *= self.temp_factor
+            #
             # Save the model
             #
             self.llm.save()
@@ -368,7 +389,7 @@ class ActorCriticAgent:
     # Use the agent's policy to rollout the environment
     # state to completion. Return the observed trajectory.
     #
-    def rollout(self, envs: list[Environment], max_trajectory_length=5) -> list[tuple[str, int, str]]:
+    def rollout(self, envs: list[Environment], max_trajectory_length=5, action_temp: float=0.) -> list[tuple[str, int, str]]:
         #
         # Store the observed transitions
         #
@@ -398,7 +419,7 @@ class ActorCriticAgent:
             #
             # Query the policy LLM
             #
-            responses = self.lang_policy.get_action(state_descriptions, action_sets)
+            responses = self.lang_policy.get_action(state_descriptions, action_sets, temp=action_temp)
             #
             # Extract the action and reasoning from each response
             #

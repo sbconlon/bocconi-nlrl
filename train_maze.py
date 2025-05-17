@@ -9,14 +9,15 @@ import pstats
 from agents.actorcritic import ActorCriticAgent
 from envs.maze.maze import MazeEnv
 from models.mistral import Mistral
+from models.tiny_llama import TinyLlama
 
 if __name__ == "__main__":
     
     #
     # Runtime profiler
     #
-    profiler = cProfile.Profile()
-    profiler.enable()
+    #profiler = cProfile.Profile()
+    #profiler.enable()
 
     #
     # Parse CLI arguements
@@ -40,6 +41,8 @@ if __name__ == "__main__":
         model_config = json.load(file)
     if model_config['type'] == 'Mistral':
         llm = Mistral(train_config['model_config'])
+    elif model_config['type'] == 'TinyLlama':
+        llm = TinyLlama(train_config['model_config'])
     else:
         raise ValueError(f"Unrecognized model type: {model_config['type']}")
     #
@@ -55,6 +58,8 @@ if __name__ == "__main__":
         K=train_config['num_sample_trajectories_per_mc']
     )
 
+    """
+    NOTE: Disabling runtime profiler
     #
     # Runtime profiler
     #
@@ -67,3 +72,4 @@ if __name__ == "__main__":
     stats.sort_stats(pstats.SortKey.TIME)
     # Print the top 20 functions
     stats.print_stats(20)
+    """

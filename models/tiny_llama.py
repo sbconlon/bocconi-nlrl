@@ -12,44 +12,33 @@ import os
 
 # Internal imports
 from models.model import LanguageModel
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, logging
 
-#
-# Restrict max memory usage to avoid spikes
-#
-# Added due to out-of-memory errors during LoRA
-#
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
-#os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
 
-class Mistral(LanguageModel):
+class TinyLlama(LanguageModel):
     #
     # Load the model and set the desired configuration parameters.
     #
-    def __init__(self, config : str):
+    def __init__(self, config: str):
         print()
-        print('Initializing Mistral', flush=True)
+        print('Initializing Tiny Llama', flush=True)
         #
         # Load the model configuration
         #
         with open(config, 'r') as file:
             self.config = json.load(file)
         #
-        # Disable HuggingFace logging for better performance
+        # Disable HF's logging for better performance
         #
         logging.set_verbosity_error()
         #
         # Configure 4-bit quantization to fit in 8GB VRAM
         #
-        #self.config['bits_and_bytes']['bnb_4bit_compute_dtype'] = eval(self.config['bits_and_bytes']['bnb_4bit_compute_dtype'])
-        #self.bnb_config = BitsAndBytesConfig(
-        #    **self.config['bits_and_bytes']
-        #)
+        self.config['bits_and_bytes']['bnb_4bit_compute_dtype'] = eval(self.config['bits_and_bytes']['bnb_4bit_compute_dtype'])
         self.bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16
+            **self.config['bits_and_bytes']
         )
-
         #
         # DEBUG
         #
@@ -59,79 +48,44 @@ class Mistral(LanguageModel):
         print()
         print('Initial memory:', flush=True)
         log_mem()
-
         #
         # Load the model and tokenizer
         #
         self.name = self.config['name']
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.name, 
-            trust_remote_code=True,
+            self.name,
         )
         self.tokenizer.add_special_tokens({'pad_token': self.tokenizer.eos_token})
-        #                                   'sep_token': '<r>'})
-
         #
         # DEBUG
         #
         print()
         print('After loading the tokenizer:', flush=True)
         log_mem()
-
-        base_model = AutoModelForCausalLM.from_pretrained(
+        
+        self.model = AutoModelForCausalLM.from_pretrained(
             self.name,
             quantization_config=self.bnb_config,
             device_map='auto',
             trust_remote_code=True
         )
-
         #
         # DEBUG
         #
         print()
         print('After loading the model:', flush=True)
         log_mem()
-        
-        
-        #
-        # The Mistral model is quantized so we have to use a LoRA adapter.
-        #
-        base_model = prepare_model_for_kbit_training(base_model)
-
-        #
-        # DEBUG
-        #
-        print()
-        print('After preparing the model:', flush=True)
-        log_mem()
-
-        lora_config = LoraConfig(
-            r=8,
-            lora_alpha=32,
-            target_modules=["q_proj", "v_proj"],
-            lora_dropout=0.1,
-            bias="none",
-            task_type="CAUSAL_LM"
-        )
-        self.model = get_peft_model(base_model, lora_config)
-
-        #
-        # DEBUG
-        #
-        print()
-        print('After peft:', flush=True)
-        log_mem()
         print()
         print("Model is on:", next(self.model.parameters()).device, flush=True)
         print()
-        print('Device map:', base_model.hf_device_map, flush=True)
+        print('Device map:', self.model.hf_device_map, flush=True)
         print()
 
     #
-    # Given strings with the user and system prompts, query the LLM
-    # and return the response.
+    # Given strings with the user and system prompts, query the LLM and return
+    # the responses.
     #
-    def generate_response(self, system_prompts : list[str], user_prompts : list[str], temp: float=None) -> list[str]:
+    def generate_response(self, system_prompts: list[str], user_prompts: list[str], temp: float=None):
         #
         # Get prompt batch size
         #
@@ -148,8 +102,7 @@ class Mistral(LanguageModel):
             else:
                 # Can't have a temperature = 0
                 # Instead, we tell the llm to act deterministicly.
-                if 'temperature' in generate_args:
-                    del generate_args['temperature']
+                del generate_args['temperature']
                 generate_args['do_sample'] = False
         #
         # Format each system + user prompt pair together
@@ -157,13 +110,13 @@ class Mistral(LanguageModel):
         prompts = []
         for system, user in zip(system_prompts, user_prompts):
             #
-            # Convert the prompt strings into the huggingface message format
+            # Convert the prompt strings into the HF message format
             #
             message = self.prompts_to_messages(system, user)
             #
-            # Format the message into Mistral's prompt format
+            # Apply the Tiny Llama prompt formatting
             #
-            mistral_prompt = self.tokenizer.apply_chat_template(
+            llama_prompt = self.tokenizer.apply_chat_template(
                 message,
                 tokenize=False,
                 add_generation_prompt=True
@@ -171,9 +124,9 @@ class Mistral(LanguageModel):
             #
             # Add this to the prompts list
             #
-            prompts.append(mistral_prompt)
+            prompts.append(llama_prompt)
         #
-        # Batch the prompts to the GPU to avoid memory overflows.
+        # Batch the prompts to the GPU to avoid memory overlfows
         #
         responses = []
         #
@@ -236,7 +189,7 @@ class Mistral(LanguageModel):
             #
             for output in outputs:
                 full = self.tokenizer.decode(output, skip_special_tokens=True)
-                parts = full.split('[/INST]', 1)
+                parts = full.split('<|assistant|>', 1)
                 response = parts[1].strip() if len(parts) > 1 else full
                 responses.append(response)
         #
@@ -253,12 +206,13 @@ class Mistral(LanguageModel):
     # Given data, fine-tune the model.
     #
     def train(self, data) -> None:
+        print('LOGGING TRAINING DATA')
         # Simple tokenization loop — fast for small datasets
         tokenized_examples = []
-        for ex in data:
+        for ex in data[:1]:
             full = self.prompts_to_messages(ex['system_prompt'],
                                             ex['user_prompt'],
-                                            response=self.tokenizer.eos_token + ex['response'])
+                                            response=self.tokenizer.sep_token + ex['response'])
             templated_full = self.tokenizer.apply_chat_template(
                 full,
                 tokenize=False,
@@ -268,11 +222,10 @@ class Mistral(LanguageModel):
                 templated_full,
                 truncation=True,
                 padding='max_length',  # Important to avoid dynamic length and fragmentation
-                max_length=2048,
+                max_length=1024, # CHANGE BACK TO 2048
                 add_special_tokens=True,
             )
-            reversed_idx = list(reversed(tokenized['input_ids'])).index(self.tokenizer.eos_token_id, 1)
-            sep_idx = len(tokenized['input_ids']) - reversed_idx
+            sep_idx = tokenized["input_ids"].index(self.tokenizer.sep_token_id)
             labels = tokenized["input_ids"][:]
             for i in range(sep_idx + 1):
                 labels[i] = -100
@@ -289,7 +242,7 @@ class Mistral(LanguageModel):
             output_dir="./outputs",
             per_device_train_batch_size=1,     # try 1–2
             per_device_eval_batch_size=1,
-            gradient_accumulation_steps=1,
+            gradient_accumulation_steps=1,     # effective batch size ≈ 8
             num_train_epochs=self.config['train']['num_train_epochs'],
             learning_rate=self.config['train']['learning_rate'],
             warmup_ratio=0.03,                 # ~3% of steps
