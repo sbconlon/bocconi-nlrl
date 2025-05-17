@@ -4,6 +4,6 @@
     "agent_config": "configs/maze/agent.json",
     
     "num_train_loops": 5,
-    "num_trajectories_per_loop": 1,
+    "num_trajectories_per_loop": 3,
     "num_sample_trajectories_per_mc": 1
 }

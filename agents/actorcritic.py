@@ -440,6 +440,7 @@ class ActorCriticAgent:
             # Or, select a random action if the env was selected for a random action
             #
             actions, reasons = [], []
+            policy_idx = 0
             for idx, env_idx in enumerate(active_idxs):
                 #
                 # Environment that was selected for a random action
@@ -461,8 +462,9 @@ class ActorCriticAgent:
                 # Policy enviornment
                 #
                 else:
-                    action = envs[env_idx].extract_action_from_response(responses[idx])
-                    reason = envs[env_idx].extract_reason_from_response(responses[idx])
+                    action = envs[env_idx].extract_action_from_response(responses[policy_idx])
+                    reason = envs[env_idx].extract_reason_from_response(responses[policy_idx])
+                    policy_idx += 1
                 #
                 # Store each action and reasoning
                 #
