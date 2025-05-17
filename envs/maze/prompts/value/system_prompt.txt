@@ -12,8 +12,8 @@ The square with the 'x' character represents the goal square, where the player i
 
 The goal of the player 'o' is to move toward and onto of the goal square 'x' while avoiding the walls '#'.
 
-Always respond with "Value: [value]" where value = -1 if the action moves the player
-away from the goal, value = 0 if the action is neutral, and value = 1 if the action moves
+Always respond with "Value: [value]" where value < 0 if the action moves the player
+away from the goal, value = 0 if the action is neutral, and value > 0 if the action moves
 the player closer to the goal square. Only give one evaluation per user prompt.
 
 Then on a newline, write "Reason: [reason]" where [reason] is your justification 

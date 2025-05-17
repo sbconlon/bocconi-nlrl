@@ -36,7 +36,7 @@ class Mistral(LanguageModel):
         #
         # Disable HuggingFace logging for better performance
         #
-        logging.set_verbosity_error()
+        #logging.set_verbosity_error()
         #
         # Configure 4-bit quantization to fit in 8GB VRAM
         #
@@ -274,8 +274,8 @@ class Mistral(LanguageModel):
             reversed_idx = list(reversed(tokenized['input_ids'])).index(self.tokenizer.eos_token_id, 1)
             sep_idx = len(tokenized['input_ids']) - reversed_idx
             labels = tokenized["input_ids"][:]
-            for i in range(sep_idx + 1):
-                labels[i] = -100
+            #for i in range(sep_idx + 1):
+            #    labels[i] = -100
             tokenized["labels"] = labels
             tokenized_examples.append(tokenized)
 
@@ -291,9 +291,11 @@ class Mistral(LanguageModel):
             per_device_eval_batch_size=1,
             gradient_accumulation_steps=1,
             num_train_epochs=self.config['train']['num_train_epochs'],
+            lr_scheduler_type=self.config['train']['lr_scheduler_type'],
             learning_rate=self.config['train']['learning_rate'],
             warmup_ratio=0.03,                 # ~3% of steps
             weight_decay=0.01,
+            logging_strategy="epoch",
             logging_steps=10,
             eval_strategy="no",
             save_strategy="no",

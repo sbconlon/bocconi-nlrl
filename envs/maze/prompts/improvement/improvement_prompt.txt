@@ -1,7 +1,7 @@
 The player is currently here:
 {state}
 
-His possible actions are {actions}.
+Available actions: {actions}
 
 Evaluations:
 {evaluations}

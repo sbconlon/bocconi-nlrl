@@ -6,7 +6,10 @@
     "throw_formatting_errors": false,
     
     "init_action_temp": 0.3,
-    "temp_factor": 0.32,
+    "temp_factor": 0.666,
+
+    "init_epsilon": 0.7,
+    "epsilon_factor": 0.666,
 
     "num_action_samples": "all",
     "top_n_actions": "all"

@@ -329,7 +329,11 @@ class MazeEnv(Environment):
             # Otherwise, record the new player location.
             #
             else:
-                res += f' moving the player to position ({px}, {py}).\n'
+                res += f' moving the player to position ({new_px}, {new_py}).\n'
+            #
+            # Update position
+            #
+            px, py = new_px, new_py
             #
             # Record the next action.
             #

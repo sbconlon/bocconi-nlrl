@@ -1,4 +1,4 @@
 The player is here:
 {state}
 
-Is it good or bad for the player to {action}?
+Does the action ({action}) move the player closer to the goal?

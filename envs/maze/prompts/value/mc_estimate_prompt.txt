@@ -1,9 +1,11 @@
+Summarize the example play throughs and use them as evidence to guide your reasoning. 
+ONLY use the information from the examples to guide your reasoning and only provide one value and 
+resoning response.
+
 Given the examples:
 {examples}
 
 The player is here:
 {state}
 
-Should the player move {action}? Summarize the example play throughs and use them as 
-evidence to guide your reasoning. ONLY use the information from the examples to guide 
-your reasoning and only provide one value and resoning response.
+Does the action ({action}) move the player closer to the goal?

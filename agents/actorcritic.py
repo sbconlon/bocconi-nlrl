@@ -31,6 +31,11 @@ class ActorCriticAgent:
         self.initial_action_temp = self.config['init_action_temp']
         self.temp_factor = self.config['temp_factor'] # Decay the temp by this factor every train iteration
         #
+        # Set the initial starting epsilon
+        #
+        self.initial_epsilon = self.config['init_epsilon']
+        self.epsilon_factor = self.config['epsilon_factor']
+        #
         # Store a reference to the model
         #
         self.llm = llm
@@ -82,6 +87,7 @@ class ActorCriticAgent:
         POLICY_BATCH_SIZE = 'all'
         KEEP_N_ITER_HISTORY = 0
         action_temp = self.initial_action_temp
+        epsilon = self.initial_epsilon
         #
         # Reset agent statistics
         #
@@ -103,7 +109,7 @@ class ActorCriticAgent:
             # Collect a trajectory with zero temperature to evaluate performance without randomness.
             #
             self.env.reset()
-            eval_trajectory = self.rollout([self.env], action_temp=0.)
+            eval_trajectory = self.rollout([self.env], action_temp=0., epsilon=0.)
             #
             # Update stats
             #
@@ -118,7 +124,8 @@ class ActorCriticAgent:
             #
             # Log the action sampling temperature
             #
-            print('Sampling actions with temperature:', action_temp)
+            print('Epsilon:', epsilon)
+            print('Sampling LLM actions with temperature:', action_temp)
             #
             # Reset game to its starting position
             #
@@ -130,7 +137,7 @@ class ActorCriticAgent:
             #
             # Rollout each enironment and collect the trajectories.
             #
-            trajectories = self.rollout(envs, action_temp=action_temp) # [[(s, a, r), ..], ...]            
+            trajectories = self.rollout(envs, action_temp=action_temp, epsilon=epsilon) # [[(s, a, r), ..], ...]            
             #
             # Log per step runtime
             #
@@ -369,9 +376,10 @@ class ActorCriticAgent:
             value_buffer = [target for target in value_buffer if target[0] >= threshold]
             policy_buffer = [target for target in policy_buffer if target[0] >= threshold]
             #
-            # Decay the action sampling temperature for the next iteration
+            # Decay the action sampling temperature and epsilon for the next iteration
             #
             action_temp *= self.temp_factor
+            epsilon *= self.epsilon_factor
             #
             # Save the model
             #
@@ -389,7 +397,7 @@ class ActorCriticAgent:
     # Use the agent's policy to rollout the environment
     # state to completion. Return the observed trajectory.
     #
-    def rollout(self, envs: list[Environment], max_trajectory_length=5, action_temp: float=0.) -> list[tuple[str, int, str]]:
+    def rollout(self, envs: list[Environment], max_trajectory_length=5, epsilon: float=0., action_temp: float=0.) -> list[tuple[str, int, str]]:
         #
         # Store the observed transitions
         #
@@ -408,14 +416,20 @@ class ActorCriticAgent:
             #
             active_idxs = [idx for idx, env in enumerate(envs) if not env.is_terminal()]
             #
+            # Get env indexes where we want to act randomly.
+            #
+            # Act randomly with probability epsilon for each env.
+            #
+            rand_idxs = [idx for idx in range(len(active_idxs)) if np.random.random() < epsilon]
+            #
             # Get the set of actions available in the current states
             #
-            action_sets = [envs[i].actions() for i in active_idxs]
+            action_sets = [envs[i].actions() for i in active_idxs if i not in rand_idxs]
             #
             # Select an action for each active environment
             #
             current_states = [deepcopy(envs[i].state) for i in active_idxs]
-            state_descriptions = [envs[i].describe_state() for i in active_idxs]
+            state_descriptions = [envs[i].describe_state() for i in active_idxs if i not in rand_idxs]
             #
             # Query the policy LLM
             #
@@ -423,10 +437,37 @@ class ActorCriticAgent:
             #
             # Extract the action and reasoning from each response
             #
+            # Or, select a random action if the env was selected for a random action
+            #
             actions, reasons = [], []
             for idx, env_idx in enumerate(active_idxs):
-                actions.append(envs[env_idx].extract_action_from_response(responses[idx]))
-                reasons.append(envs[env_idx].extract_reason_from_response(responses[idx]))
+                #
+                # Environment that was selected for a random action
+                #
+                if env_idx in rand_idxs:
+                    action, reason = envs[env_idx].get_random_action()
+                    #
+                    # Log the random action
+                    #
+                    print('-------------------', flush=True)
+                    print('--> Random Action', flush=True)
+                    print(flush=True)
+                    print('State:')
+                    print(envs[env_idx].describe_state(), flush=True)
+                    print(flush=True)
+                    print('Action:', action, flush=True)
+                    print(flush=True)
+                #
+                # Policy enviornment
+                #
+                else:
+                    action = envs[env_idx].extract_action_from_response(responses[idx])
+                    reason = envs[env_idx].extract_reason_from_response(responses[idx])
+                #
+                # Store each action and reasoning
+                #
+                actions.append(action)
+                reasons.append(reason)
             #
             # Apply the actions to the environments to collect the
             # rewards and the next states.

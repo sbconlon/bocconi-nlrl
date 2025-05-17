@@ -1,7 +1,7 @@
 You are an expert at solving mazes. Your job is to consult a player in the middle of a maze.
 You will be given a maze showing where the player currently is and a goal where he is trying to go.
-You will be given a list of evaluations rating how strong each possible move is. Pick the best
-action using the evaluations to guide your reasoning.
+You will be given a list of evaluations rating if the action moves the player closer to the goal or not. 
+Pick the best action using the evaluations to guide your reasoning.
 
 The maze is a 2d grid with squares. 
 Squares with '#' characters in the maze represent walls.
