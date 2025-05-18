@@ -9,7 +9,7 @@
     "temp_factor": 0.666,
 
     "init_epsilon": 0.5,
-    "epsilon_factor": 0.666,
+    "epsilon_factor": 0.25,
 
     "num_action_samples": "all",
     "top_n_actions": "all",

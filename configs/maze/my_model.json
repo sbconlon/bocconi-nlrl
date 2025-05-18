@@ -3,7 +3,7 @@
 
     "type": "Mistral",
 
-    "save_dir": "outputs/mistral_2x2_maze/",
+    "save_dir": "outputs/mistral_2x2_maze_v2/",
     "peft_model": true,
     
     "bits_and_bytes": {
@@ -18,7 +18,7 @@
     },
 
     "train" : {
-        "num_train_epochs": 10,
+        "num_train_epochs": 4,
         "lr_scheduler_type": "constant",
         "learning_rate": 5e-5
     }
