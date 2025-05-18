@@ -429,7 +429,7 @@ class NegotiationEnv(Environment):
             if self.throw_formatting_errors:
                 raise ValueError(message_str)
             else:
-                price, _ = self.get_random_action(self.action_set)
+                price, _ = self.get_random_action()
                 message = ''
                 print('WARNING: ' + message_str)
         #
@@ -438,7 +438,7 @@ class NegotiationEnv(Environment):
         # If not, either raise an error or pick a random action.
         #
         if price < -2:
-            message_str = f"Policy LLM selected an invalid action. Got {price}. Expected one of these {self.action_set}\n Response: {response}"
+            message_str = f"Policy LLM selected an invalid action. Got {price}. \n Response: {response}"
             if self.throw_formatting_errors:
                 raise ValueError(message_str)
             else:
