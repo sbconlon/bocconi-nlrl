@@ -4,6 +4,7 @@
     "type": "Mistral",
 
     "save_dir": "outputs/mistral_2x2_maze/",
+    "peft_model": false,
     
     "bits_and_bytes": {
         "load_in_4bit": true,
@@ -17,7 +18,8 @@
     },
 
     "train" : {
-        "num_train_epochs": 1,
-        "learning_rate": 2e-4
+        "num_train_epochs": 5,
+        "lr_scheduler_type": "constant",
+        "learning_rate": 5e-5
     }
 }

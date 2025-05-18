@@ -2,7 +2,17 @@
     "policy_config": "configs/negotiation/policy.json",
     "values_config": "configs/negotiation/values.json",
     "improvement_config": "configs/negotiation/improvement.json",
+    
     "throw_formatting_errors": false,
-    "num_action_samples": 4,
-    "top_n_actions": "all"
+    
+    "init_action_temp": 0.3,
+    "temp_factor": 0.666,
+
+    "init_epsilon": 0.5,
+    "epsilon_factor": 0.666,
+
+    "num_action_samples": "all",
+    "top_n_actions": "all",
+
+    "max_trajectory_length": 2
 }

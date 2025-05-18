@@ -9,6 +9,7 @@ import pstats
 from agents.actorcritic import ActorCriticAgent
 from envs.negotiation.negotiation import NegotiationEnv
 from models.mistral import Mistral
+from models.tiny_llama import TinyLlama
 
 if __name__ == "__main__":
     
