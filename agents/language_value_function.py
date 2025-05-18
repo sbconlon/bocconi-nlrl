@@ -142,13 +142,6 @@ class LanguageValueFunction:
         #
         for i in range(N):
             #
-            # Unpack sa pair info
-            #
-            state, action = sa_pairs[i]
-            action_set = action_sets[i]
-            action_str = action_set[action] if action_set else action
-            response = responses[i]
-            #
             # Log
             #
             print('-------------------', flush=True)

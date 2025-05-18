@@ -109,7 +109,7 @@ class ActorCriticAgent:
             # Collect a trajectory with zero temperature to evaluate performance without randomness.
             #
             self.env.reset()
-            eval_trajectory = self.rollout([self.env], action_temp=0., epsilon=0.)
+            eval_trajectory = self.rollout([self.env], self.config['max_trajectory_length'], action_temp=0., epsilon=0.)
             #
             # Update stats
             #
@@ -137,7 +137,7 @@ class ActorCriticAgent:
             #
             # Rollout each enironment and collect the trajectories.
             #
-            trajectories = self.rollout(envs, action_temp=action_temp, epsilon=epsilon) # [[(s, a, r), ..], ...]            
+            trajectories = self.rollout(envs, self.config['max_trajectory_length'], action_temp=action_temp, epsilon=epsilon) # [[(s, a, r), ..], ...]            
             #
             # Log per step runtime
             #
@@ -207,7 +207,7 @@ class ActorCriticAgent:
                     #
                     # Rollout the environments
                     #
-                    rollouts = self.rollout(envs, action_temp=action_temp)
+                    rollouts = self.rollout(envs, self.config['max_trajectory_length']-1, action_temp=action_temp)
                     #
                     # Add the first transition to the front of these rollouts to
                     # get the full sample trajectory.
@@ -397,7 +397,7 @@ class ActorCriticAgent:
     # Use the agent's policy to rollout the environment
     # state to completion. Return the observed trajectory.
     #
-    def rollout(self, envs: list[Environment], max_trajectory_length=5, epsilon: float=0., action_temp: float=0.) -> list[tuple[str, int, str]]:
+    def rollout(self, envs: list[Environment], max_trajectory_length:int, epsilon: float=0., action_temp: float=0.) -> list[tuple[str, int, str]]:
         #
         # Store the observed transitions
         #

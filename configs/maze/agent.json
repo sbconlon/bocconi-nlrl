@@ -12,5 +12,7 @@
     "epsilon_factor": 0.666,
 
     "num_action_samples": "all",
-    "top_n_actions": "all"
+    "top_n_actions": "all",
+
+    "max_trajectory_length": 2
 }

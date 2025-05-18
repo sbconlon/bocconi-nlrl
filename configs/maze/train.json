@@ -1,9 +1,9 @@
 {
-    "initial_board": "envs/maze/starting_boards/simplest_board.txt",
-    "model_config": "configs/maze/mistral.json",
+    "initial_board": "envs/maze/starting_boards/simpler_board.txt",
+    "model_config": "configs/maze/my_model.json",
     "agent_config": "configs/maze/agent.json",
     
     "num_train_loops": 5,
-    "num_trajectories_per_loop": 3,
+    "num_trajectories_per_loop": 10,
     "num_sample_trajectories_per_mc": 1
 }

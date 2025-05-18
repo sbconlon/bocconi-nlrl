@@ -3,7 +3,7 @@ import bitsandbytes as bnb
 from copy import copy
 from datasets import Dataset
 import json
-from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model
+from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model, PeftModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, logging, Trainer, TrainingArguments, default_data_collator
 import time
 import torch
@@ -78,20 +78,19 @@ class Mistral(LanguageModel):
         print('After loading the tokenizer:', flush=True)
         log_mem()
 
+
         base_model = AutoModelForCausalLM.from_pretrained(
             self.name,
             quantization_config=self.bnb_config,
             device_map='auto',
             trust_remote_code=True
         )
-
         #
         # DEBUG
         #
         print()
         print('After loading the model:', flush=True)
         log_mem()
-        
         
         #
         # The Mistral model is quantized so we have to use a LoRA adapter.
@@ -104,16 +103,29 @@ class Mistral(LanguageModel):
         print()
         print('After preparing the model:', flush=True)
         log_mem()
-
-        lora_config = LoraConfig(
-            r=8,
-            lora_alpha=32,
-            target_modules=["q_proj", "v_proj"],
-            lora_dropout=0.1,
-            bias="none",
-            task_type="CAUSAL_LM"
+        
+        #
+        # If the input model has pre-trained LoRA layers, then load them.
+        #
+        if self.config['peft_model']:
+            self.model = PeftModel.from_pretrained(
+                base_model, # Base pre-trained Mistral model 
+                self.name, # Path to directory containing adapter_model.json
+                is_trainable=True # Make sure we can continue to train the LoRA weights
         )
-        self.model = get_peft_model(base_model, lora_config)
+        #
+        # Otherwise, initialize new LoRA layers from scratch.
+        #
+        else:
+            lora_config = LoraConfig(
+                r=8,
+                lora_alpha=32,
+                target_modules=["q_proj", "v_proj"],
+                lora_dropout=0.1,
+                bias="none",
+                task_type="CAUSAL_LM"
+            )
+            self.model = get_peft_model(base_model, lora_config)
 
         #
         # DEBUG
@@ -239,6 +251,7 @@ class Mistral(LanguageModel):
                 parts = full.split('[/INST]', 1)
                 response = parts[1].strip() if len(parts) > 1 else full
                 responses.append(response)
+        
         #
         # Clear the GPU cache before returning
         #
@@ -258,7 +271,8 @@ class Mistral(LanguageModel):
         for ex in data:
             full = self.prompts_to_messages(ex['system_prompt'],
                                             ex['user_prompt'],
-                                            response=self.tokenizer.eos_token + ex['response'])
+                                            ex['response'])
+                                            #response=self.tokenizer.eos_token + ex['response'])
             templated_full = self.tokenizer.apply_chat_template(
                 full,
                 tokenize=False,
@@ -271,8 +285,8 @@ class Mistral(LanguageModel):
                 max_length=2048,
                 add_special_tokens=True,
             )
-            reversed_idx = list(reversed(tokenized['input_ids'])).index(self.tokenizer.eos_token_id, 1)
-            sep_idx = len(tokenized['input_ids']) - reversed_idx
+            #reversed_idx = list(reversed(tokenized['input_ids'])).index(self.tokenizer.eos_token_id, 1)
+            #sep_idx = len(tokenized['input_ids']) - reversed_idx
             labels = tokenized["input_ids"][:]
             #for i in range(sep_idx + 1):
             #    labels[i] = -100
