@@ -3,7 +3,7 @@
     "model_config": "configs/maze/my_model.json",
     "agent_config": "configs/maze/agent.json",
     
-    "num_train_loops": 3,
-    "num_trajectories_per_loop": 10,
+    "num_train_loops": 2,
+    "num_trajectories_per_loop": 15,
     "num_sample_trajectories_per_mc": 1
 }

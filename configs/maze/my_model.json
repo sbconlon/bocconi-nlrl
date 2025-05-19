@@ -1,10 +1,13 @@
 {
-    "name": "outputs/mistral_2x2_maze",
+    "name": "outputs/mistral_simplest_maze_model",
 
     "type": "Mistral",
+    "base_model": "mistralai/Mistral-7B-Instruct-v0.1",
 
-    "save_dir": "outputs/mistral_2x2_maze_v2/",
+    "save_dir": "outputs/mistral_simpler_maze_model",
+    
     "peft_model": true,
+    "is_trainable": true,
     
     "bits_and_bytes": {
         "load_in_4bit": true,
@@ -18,8 +21,8 @@
     },
 
     "train" : {
-        "num_train_epochs": 4,
+        "num_train_epochs": 30,
         "lr_scheduler_type": "constant",
-        "learning_rate": 5e-5
+        "learning_rate": 5e-6
     }
 }

@@ -1,0 +1,8 @@
+{
+    "initial_board": "envs/maze/starting_boards/simplest_board.txt",
+    "model_config": "configs/maze/my_model.json",
+    "agent_config": "configs/maze/agent.json",
+    
+    "max_trajectory_length": 2,
+    "action_temp": 0.1
+}

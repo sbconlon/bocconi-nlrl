@@ -1,9 +1,11 @@
 {
     "name": "mistralai/Mistral-7B-Instruct-v0.1",
+    
+    "base_model": "mistralai/Mistral-7B-Instruct-v0.1",
 
     "type": "Mistral",
 
-    "save_dir": "outputs/mistral_2x2_maze/",
+    "save_dir": "outputs/mistral_simpliest_maze_model/",
     "peft_model": false,
     
     "bits_and_bytes": {
@@ -18,7 +20,7 @@
     },
 
     "train" : {
-        "num_train_epochs": 5,
+        "num_train_epochs": 2,
         "lr_scheduler_type": "constant",
         "learning_rate": 5e-5
     }

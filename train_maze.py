@@ -13,11 +13,15 @@ from models.tiny_llama import TinyLlama
 
 if __name__ == "__main__":
     
+    
+    """
+    NOTE - Disabled runtime profiler
     #
     # Runtime profiler
     #
-    #profiler = cProfile.Profile()
-    #profiler.enable()
+    profiler = cProfile.Profile()
+    profiler.enable()
+    """
 
     #
     # Parse CLI arguements

@@ -61,7 +61,7 @@ class Mistral(LanguageModel):
         log_mem()
 
         #
-        # Load the model and tokenizer
+        # Load the base model and tokenizer
         #
         self.name = self.config['name']
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -80,7 +80,7 @@ class Mistral(LanguageModel):
 
 
         base_model = AutoModelForCausalLM.from_pretrained(
-            self.name,
+            self.config['base_model'],
             quantization_config=self.bnb_config,
             device_map='auto',
             trust_remote_code=True
@@ -108,10 +108,11 @@ class Mistral(LanguageModel):
         # If the input model has pre-trained LoRA layers, then load them.
         #
         if self.config['peft_model']:
+            print('Loading pretrained Peft model')
             self.model = PeftModel.from_pretrained(
                 base_model, # Base pre-trained Mistral model 
-                self.name, # Path to directory containing adapter_model.json
-                is_trainable=True # Make sure we can continue to train the LoRA weights
+                self.name, # Path to directory containing the adapter_model.json file
+                is_trainable=self.config['is_trainable'] # Make sure we can continue to train the LoRA weights
         )
         #
         # Otherwise, initialize new LoRA layers from scratch.
@@ -387,3 +388,4 @@ class Mistral(LanguageModel):
         save_dir = self.config['save_dir']
         self.model.save_pretrained(save_dir)
         self.tokenizer.save_pretrained(save_dir)
+        print(f"Saved model to {self.config['save_dir']}")

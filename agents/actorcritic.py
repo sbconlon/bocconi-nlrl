@@ -115,6 +115,8 @@ class ActorCriticAgent:
             #
             self.update_stats(eval_trajectory)
             self.print_stat_summary()
+            if self.avg_reward_per_step == 0.5:
+                return
             #
             # Collect trajectories
             #
@@ -373,8 +375,10 @@ class ActorCriticAgent:
             # Evict old targets
             #
             threshold = train_idx - KEEP_N_ITER_HISTORY
-            value_buffer = [target for target in value_buffer if target[0] >= threshold]
-            policy_buffer = [target for target in policy_buffer if target[0] >= threshold]
+            value_buffer = [target for target in value_buffer if target[0] > threshold]
+            policy_buffer = [target for target in policy_buffer if target[0] > threshold]
+            print('value_buffer size after evictions:', value_buffer)
+            print('policy_buffer size after evictions:', policy_buffer)
             #
             # Decay the action sampling temperature and epsilon for the next iteration
             #

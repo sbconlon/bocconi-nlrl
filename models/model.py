@@ -41,3 +41,6 @@ class LanguageModel:
         if response is not None:
             messages.append({'role': 'assistant', 'content': response})
         return messages
+    
+    def eval(self):
+        self.model.eval()
